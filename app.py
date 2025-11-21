@@ -1,8 +1,6 @@
 from flask import Flask, request, jsonify
-from google.colab import files
 import tensorflow as tf
 import numpy as np
-import matplotlib.pyplot as plt
 from tensorflow.keras.preprocessing import image
 from flask_cors import CORS
 
