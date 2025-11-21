@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.preprocessing import image
+from io import BytesIO
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -41,7 +42,10 @@ def predictSVM():
 
     try:
         # Cargar y preprocesar imagen
-        img = image.load_img(file.stream, target_size=img_size)
+        img_bytes = BytesIO(file.read())
+
+        # Cargar imagen desde BytesIO
+        img = image.load_img(img_bytes, target_size=img_size)
         img_array = image.img_to_array(img)
         img_array = np.expand_dims(img_array, axis=0)
         img_array = tf.keras.applications.efficientnet.preprocess_input(img_array)
@@ -49,14 +53,14 @@ def predictSVM():
         # Predicción
         preds = model.predict(img_array)
         pred_idx = np.argmax(preds[0])
-        confidence = preds[0][pred_idx]
+        confidence = float(preds[0][pred_idx])
 
         # Detección de "Desconocido"
         if confidence < CONFIDENCE_THRESHOLD:
             predicted_label = "Desconocido"
             print(f"Confianza baja ({confidence*100:.2f}%). No coincide con ninguna clase.")
         else:
-            predicted_label = f"{class_names[pred_idx]} ({confidence*100:.2f}%)"
+            predicted_label = f"{class_names[pred_idx]}"
 
         # Mostrar probabilidades detalladas
         print("\nProbabilidades:")
@@ -77,4 +81,4 @@ def health():
     return {"status": "ok"}
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000)
